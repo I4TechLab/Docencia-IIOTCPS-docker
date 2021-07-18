@@ -1,0 +1,54 @@
+version: "3"
+
+services:
+  node-red:
+    image: nodered:<tag>
+    environment:
+      - TZ=Europe/Amsterdam
+    ports:
+      - "1880:1880"
+    networks:
+      built_in_container_network:
+        ipv4_address: 172.16.238.6
+    volumes:
+      - nodered-storage:/data
+  web:
+    image: grafana:<tag>
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=supersecretpassword
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./grafana-provisioning/:/etc/grafana/provisioning
+    networks:
+      built_in_container_network:
+        ipv4_address: 172.16.238.3
+
+  database:
+    image: influxdb:1.8.4-alpine
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb-storage:/var/lib/influxdb
+    environment:
+      - INFLUXDB_DB=mydb
+      - INFLUXDB_ADMIN_USER=admin
+      - INFLUXDB_ADMIN_PASSWORD=supersecretpassword
+    networks:
+      built_in_container_network:
+        ipv4_address: 172.16.238.2
+
+volumes:
+  influxdb-storage:
+  grafana-storage:
+  nodered-storage:
+
+networks:
+  built_in_container_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.16.238.0/24
+          gateway: 172.16.238.1
